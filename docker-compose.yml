@@ -1,0 +1,52 @@
+services:
+  mongodb:
+    image: mongo:8.0
+    container_name: votexa-mongo
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: votexa
+    volumes:
+      - mongo-data:/data/db
+
+  redis:
+    image: redis:7-alpine
+    container_name: votexa-redis
+    ports:
+      - "6379:6379"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: votexa-backend
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      APP_ENV: production
+      FRONTEND_ORIGIN: "http://localhost:5173"
+      MONGODB_URI: "mongodb://mongodb:27017"
+      MONGODB_DATABASE: votexa
+      REDIS_URL: "redis://redis:6379/0"
+      JWT_SECRET: "votexa-super-secret-jwt-key-2026-production-grade"
+      FREE_POLL_LIMIT: 10
+      PREMIUM_POLL_LIMIT: 1000
+      PREMIUM_UNLIMITED_POLLS: "true"
+      PUBLIC_APP_URL: "http://localhost:5173"
+    depends_on:
+      - mongodb
+      - redis
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: votexa-frontend
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  mongo-data:

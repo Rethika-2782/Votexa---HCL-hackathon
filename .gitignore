@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Build artifacts
+dist/
+build/
+bin/
+
+# Environment variables & secrets
+.env
+.env.local
+*.env
+
+# Operating System & IDE files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.log
+
+# Scratch / video generation temp files (only keep final votexa_demo.mp4)
+scratch/
+*.webm
+*.tmp
