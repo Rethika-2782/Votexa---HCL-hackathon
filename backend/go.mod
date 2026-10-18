@@ -1,6 +1,6 @@
 module votexa-backend
 
-go 1.27.0
+go 1.26.0
 
 require (
 	github.com/gin-contrib/cors v1.7.9
