@@ -92,6 +92,10 @@ func (h *Hub) Run() {
 }
 
 func (h *Hub) startRedisSubscription(pollCode string) {
+	if h.Redis == nil {
+		// No Redis configured — skip pub/sub subscription
+		return
+	}
 	ctx, cancel := context.WithCancel(context.Background())
 	h.PollPubSubs[pollCode] = cancel
 

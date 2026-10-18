@@ -29,10 +29,16 @@ func main() {
 		log.Fatalf("[MongoDB] Fatal connection error: %v", err)
 	}
 
-	// Connect to Redis
-	redisClient, err := redisService.ConnectRedis(cfg.RedisURL)
-	if err != nil {
-		log.Fatalf("[Redis] Fatal connection error: %v", err)
+	// Connect to Redis (optional — app degrades gracefully without pub/sub)
+	var redisClient *redisService.RedisService
+	if cfg.RedisURL != "" && cfg.RedisURL != "redis://localhost:6379/0" {
+		redisClient, err = redisService.ConnectRedis(cfg.RedisURL)
+		if err != nil {
+			log.Printf("[Redis] Warning: Could not connect to Redis (%v). Real-time pub/sub disabled.", err)
+			redisClient = nil
+		}
+	} else {
+		log.Println("[Redis] No external Redis URL configured. Running without pub/sub (single-instance mode).")
 	}
 
 	// Initialize WebSocket Hub

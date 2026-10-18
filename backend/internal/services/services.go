@@ -208,7 +208,7 @@ func (s *PollService) ClosePoll(ctx context.Context, code string, ownerID bson.O
 	}
 
 	poll, err := s.repo.GetPollByCode(ctx, code)
-	if err == nil {
+	if err == nil && s.redis != nil {
 		optionVotes := make(map[string]int64)
 		for _, opt := range poll.Options {
 			optionVotes[opt.ID] = opt.VoteCount
@@ -282,9 +282,11 @@ func (s *PollService) CastVote(ctx context.Context, pollCode, optionID string, v
 		Timestamp:   time.Now(),
 	}
 
-	if err := s.redis.PublishPollUpdate(ctx, updateMsg); err != nil {
-		// Log error but don't fail vote since MongoDB write succeeded
-		fmt.Printf("[Redis] Warning: Failed to publish poll update: %v\n", err)
+	if s.redis != nil {
+		if err := s.redis.PublishPollUpdate(ctx, updateMsg); err != nil {
+			// Log error but don't fail vote since MongoDB write succeeded
+			fmt.Printf("[Redis] Warning: Failed to publish poll update: %v\n", err)
+		}
 	}
 
 	return updatedPoll, nil
