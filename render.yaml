@@ -1,0 +1,35 @@
+services:
+  - type: web
+    name: votexa-backend
+    env: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    plan: free
+    region: oregon
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: APP_ENV
+        value: production
+      - key: FRONTEND_ORIGIN
+        value: https://votexa.vercel.app
+      - key: MONGODB_DATABASE
+        value: votexa
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRATION
+        value: 72
+      - key: FREE_POLL_LIMIT
+        value: 10
+      - key: PREMIUM_POLL_LIMIT
+        value: 1000
+      - key: PREMIUM_UNLIMITED_POLLS
+        value: "true"
+      - key: ADMIN_SECRET_KEY
+        value: votexa-admin-secret-provision-2026
+      # Add your MongoDB Atlas connection string:
+      # - key: MONGODB_URI
+      #   sync: false
+      # Add your Upstash or Render Redis URL:
+      # - key: REDIS_URL
+      #   sync: false
