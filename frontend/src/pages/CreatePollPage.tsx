@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Plus, Trash2, ArrowRight, AlertCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Plus, Trash2, ArrowRight, AlertCircle, Share2, Copy, Check, QrCode, Smartphone, ExternalLink } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -17,6 +18,10 @@ export const CreatePollPage: React.FC<CreatePollProps> = ({ onPollCreated, onCan
   const [theme, setTheme] = useState('brand');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Post-creation share & QR modal state
+  const [createdPollCode, setCreatedPollCode] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const addOption = () => {
     if (options.length < 8) {
@@ -71,7 +76,7 @@ export const CreatePollPage: React.FC<CreatePollProps> = ({ onPollCreated, onCan
       });
 
       await refreshUserData();
-      onPollCreated(res.poll.code);
+      setCreatedPollCode(res.poll.code);
     } catch (err: any) {
       if (err.code === 'POLL_LIMIT_REACHED' || err.message?.includes('POLL_LIMIT_REACHED')) {
         openUpgradeModal();
@@ -239,6 +244,98 @@ export const CreatePollPage: React.FC<CreatePollProps> = ({ onPollCreated, onCan
           </div>
         </form>
       </motion.div>
+
+      {/* Share to Mobile & QR Code Modal */}
+      <AnimatePresence>
+        {createdPollCode && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="w-full max-w-md p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl text-center relative"
+            >
+              <div className="w-12 h-12 mx-auto mb-4 rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center text-white shadow-lg shadow-brand-500/30">
+                <Smartphone size={24} />
+              </div>
+
+              <h2 className="text-xl font-extrabold text-slate-900 dark:text-white mb-1">
+                Poll Created Successfully! 🎉
+              </h2>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mb-5">
+                Share this link to your mobile device or scan the QR code to vote and sync live.
+              </p>
+
+              {/* QR Code Presentation Box */}
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700/60 inline-block mb-5">
+                <div className="p-2.5 bg-white rounded-xl shadow-sm inline-block">
+                  <QRCodeSVG
+                    value={`${window.location.origin}/poll/${createdPollCode}`}
+                    size={160}
+                    level="M"
+                  />
+                </div>
+                <div className="mt-2 flex items-center justify-center gap-1.5 text-[11px] font-bold text-brand-600 dark:text-brand-400">
+                  <QrCode size={13} />
+                  <span>Scan with Smartphone Camera</span>
+                </div>
+              </div>
+
+              {/* Shareable Link Box */}
+              <div className="flex items-center gap-2 p-2.5 bg-slate-100 dark:bg-slate-800 rounded-xl mb-6">
+                <input
+                  type="text"
+                  readOnly
+                  value={`${window.location.origin}/poll/${createdPollCode}`}
+                  className="flex-1 bg-transparent text-xs text-slate-700 dark:text-slate-300 font-mono outline-none truncate px-1"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/poll/${createdPollCode}`);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  className="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold rounded-lg transition flex items-center gap-1.5 shrink-0"
+                >
+                  {copied ? <Check size={13} /> : <Copy size={13} />}
+                  <span>{copied ? 'Copied' : 'Copy'}</span>
+                </button>
+              </div>
+
+              {/* Actions: Open Live Poll or Share on Mobile */}
+              <div className="flex flex-col gap-2">
+                {navigator.share && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.share({
+                        title: question,
+                        text: `Vote on my live poll: ${question}`,
+                        url: `${window.location.origin}/poll/${createdPollCode}`,
+                      }).catch(() => {});
+                    }}
+                    className="w-full py-2.5 text-xs font-bold text-brand-700 dark:text-brand-300 bg-brand-50 dark:bg-brand-500/10 hover:bg-brand-100 dark:hover:bg-brand-500/20 border border-brand-200 dark:border-brand-500/30 rounded-xl transition flex items-center justify-center gap-2"
+                  >
+                    <Share2 size={14} />
+                    <span>Share to Mobile via WhatsApp / AirDrop</span>
+                  </button>
+                )}
+
+                <button
+                  type="button"
+                  onClick={() => onPollCreated(createdPollCode)}
+                  className="w-full py-3 text-xs font-bold text-white bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-500 hover:to-indigo-500 rounded-xl shadow-md shadow-brand-500/25 transition flex items-center justify-center gap-2"
+                >
+                  <span>Open Live Poll Dashboard</span>
+                  <ExternalLink size={14} />
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
+
